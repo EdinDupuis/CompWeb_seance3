@@ -38,7 +38,7 @@ function TodoList() {
     };
 
     const completed = () => {
-        const comp = todos.filter(todo => {}).length;
+        const comp = todos.filter(todo => todo.completed).length;
         const total : number  = todos.length;
         return "{" + comp + "/"+ total +"}";
     }
