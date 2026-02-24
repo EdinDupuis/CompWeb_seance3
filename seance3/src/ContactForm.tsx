@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 
-// 1️⃣ Schéma Zod
+
 const contactSchema = z.object({
     name: z.string()
         .min(1, { message: 'Nom requis' })
@@ -9,7 +9,7 @@ const contactSchema = z.object({
 
     email: z.string()
         .min(1, { message: 'Email requis' })
-        .email(/^[^\s@]+@[^\s@]+\.[^\s@]+$/,{ message: 'Email invalide' }),
+        .email({ message: 'Email invalide' }),
 
     phone: z.string()
         .min(1, { message: 'Téléphone requis' })
@@ -20,7 +20,6 @@ const contactSchema = z.object({
         .min(10, { message: 'Au moins 10 caractères' })
 });
 
-// 2️⃣ Type inféré automatiquement
 type ContactFormData = z.infer<typeof contactSchema>;
 
 function ContactForm() {
@@ -34,7 +33,6 @@ function ContactForm() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitSuccess, setSubmitSuccess] = useState(false);
 
-    // Mise à jour des champs
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
@@ -42,21 +40,19 @@ function ContactForm() {
         setSubmitSuccess(false);
     };
 
-    // Validation d’un seul champ (onBlur)
     const validateField = (name: keyof ContactFormData, value: string) => {
-        const result = contactSchema
-            .pick({ [name]: true })
-            .safeParse({ [name]: value });
+        const fieldSchema = contactSchema.pick({ [name]: true } as Record<keyof ContactFormData, true>);
+
+        const result = fieldSchema.safeParse({ [name]: value });
 
         setErrors(prev => ({
             ...prev,
             [name]: result.success
                 ? ''
-                : result.error.errors?.[0]?.message || 'Erreur'
+                : result.error.issues?.[0]?.message || 'Erreur'
         }));
     };
 
-    // Vérifier si tout le formulaire est valide
     const isFormValid = () => {
         return contactSchema.safeParse(formData).success;
     };
@@ -68,7 +64,7 @@ function ContactForm() {
 
         if (!result.success) {
             const fieldErrors: Record<string, string> = {};
-            result.error.errors.forEach(err => {
+            result.error.issues.forEach(err => {
                 if (err.path[0]) {
                     fieldErrors[err.path[0].toString()] = err.message;
                 }
@@ -77,7 +73,6 @@ function ContactForm() {
             return;
         }
 
-        // ✅ Données validées
         console.log('Données valides:', result.data);
 
         setSubmitSuccess(true);
